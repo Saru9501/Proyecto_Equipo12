@@ -1,7 +1,7 @@
-/*Autores:          Yesenia / Gbriela
-* Num. Cuenta: 317248683 / 317313521
+/*Autores:          Yesenia / Gabriela / Alan
+* Num. Cuenta: 317248683 / 317313521 / 115002762
 * Proyecto Equipo 12
-* Fecha: 07 de mayo de 2025
+* Fecha: 14 de mayo de 2025
 */
 #include <iostream>
 #include <cmath>
@@ -131,7 +131,19 @@ float rotBrazoD2 = 0.0f, rotBrazoI2 = 0.0f;  // Rotación brazos para caminar
 float rotPiernaD = 0.0f, rotPiernaI = 0.0f; // Rotación piernas
 bool caminando = false;            // Estado de caminar (activado con C)
 
-// Variables para la animación del suelo nuevo (sin vectores)
+// Variables para animación de brazos extendidos
+bool armsUp = false;
+float armRaiseTime = 0.0f;
+const float armRaiseDuration = 1.0f; // Duración de la animación de levantar brazos
+float armRaiseAngle = 0.0f; // Ángulo actual de elevación de brazos
+
+// Variables para la animación de la esfera
+bool showParedes = false;
+float Time = 1.0f;
+float MaxTime = 3.0f;
+float tiempo = 0.0f;
+
+// Variables para la animación del suelo nuevo 
 bool activateFloorAnimation = false;
 float floorAnimationTime = 0.0f;
 const float floorAnimationDuration = 5.0f; // Duración total de la animación
@@ -156,13 +168,6 @@ glm::vec3 suelo9InitialPos = glm::vec3(11.8622f, 0.0f, 20.4255f);
 
 glm::vec3 savedPosition = camera.GetPosition();
 glm::vec3 savedFront = camera.GetFront();
-
-// Variables para animación de brazos extendidos
-bool armsUp = false;
-float armRaiseTime = 0.0f;
-const float armRaiseDuration = 1.0f; // Duración de la animación de levantar brazos
-float armRaiseAngle = 0.0f; // Ángulo actual de elevación de brazos
-
 // Variables para la animacion del techo y las sillas
 bool activateAnimation2 = false;
 float roofAngle = 0.0f;          //  ngulo de inclinaci n del techo
@@ -2498,12 +2503,12 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		puertaDer.Draw(lightingShader);
 
-		if (aparecePiso == true) {
-			view = camera.GetViewMatrix();
-			model = glm::mat4(1);
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-			Piso.Draw(lightingShader);
+		view = camera.GetViewMatrix();
+		model = glm::mat4(1);
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Piso.Draw(lightingShader);
 
+		if (aparecePiso == true) {
 			//Paredes
 			view = camera.GetViewMatrix();
 			model = glm::mat4(1);
@@ -2613,7 +2618,7 @@ int main()
 		model = glm::rotate(model, glm::radians(rotPiernaI), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		musloI.Draw(lightingShader);
-
+		
 		//Columna derecha 
 		model = glm::mat4(1);
 		model = glm::translate(model, glm::vec3(-14.0f + column_2, 0.0f, -0.02f));
@@ -2787,7 +2792,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 			// No resetear rotaciones aquí, dejar que DoMovement() maneje la transición
 		}
 	}
-
 	if (keys[GLFW_KEY_F]) {
 		activateFloorAnimation = true;
 		floorAnimationTime = 0.0f;
@@ -2904,6 +2908,15 @@ void Animation() {
 		// Aplicar a ambos brazos
 		rotBrazoD = armRaiseAngle;
 		rotBrazoI = -armRaiseAngle;
+		showParedes = true;
+	}
+	if (showParedes) {
+		tiempo += Time * deltaTime;
+
+		// Cuando alcanza el tamaño máximo, cambiar las paredes
+		if (tiempo >= MaxTime) {
+			aparecePiso = false; // Esto cambiará las paredes por las nuevas
+		}
 	}
 	//Animacion del suelo 
 	if (activateFloorAnimation && floorAnimationTime < floorAnimationDuration) {
@@ -2911,7 +2924,6 @@ void Animation() {
 		float progress = floorAnimationTime / floorAnimationDuration;
 
 		// Suavizar la animación (ease-in-out)
-		//float t = progress * progress * (3.0f - 2.0f * progress);
 		float t = pow(progress, 7) * (3.0f - 2.0f * progress);
 		// Mover cada pieza desde su posición inicial a la final
 		if (progress > 0.1f) suelo3FinalPos = glm::mix(suelo3InitialPos, suelo3FinalPos, t);
@@ -2922,7 +2934,6 @@ void Animation() {
 		if (progress > 0.6f) suelo8FinalPos = glm::mix(suelo8InitialPos, suelo8FinalPos, t);
 		if (progress > 0.7f) suelo9FinalPos = glm::mix(suelo9InitialPos, suelo9FinalPos, t);
 		if (progress > 0.8f) suelo2FinalPos = glm::mix(suelo2InitialPos, suelo2FinalPos, t);
-		camera = Camera(savedPosition, glm::vec3(0.0f, 1.0f, 0.0f)); // reconstruir
 	}
 }
 void MouseCallback(GLFWwindow* window, double xPos, double yPos)
